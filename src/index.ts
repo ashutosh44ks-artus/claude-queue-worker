@@ -1,7 +1,12 @@
 import axios from "axios";
 import "dotenv/config";
 import { PendingTaskResponse } from "./types";
-import { BACKEND_URL, MACHINE_ID, runClaudeTask } from "./utils";
+import {
+  BACKEND_URL,
+  MACHINE_ID,
+  runClaudeTask,
+  runPreFlightChecks,
+} from "./utils";
 
 /**
  * Polls the backend for "pending" tasks
@@ -52,5 +57,13 @@ const pollTasks = async (): Promise<void> => {
   }
 };
 
-console.log("📡 Listener active. Waiting for instructions...");
-pollTasks();
+runPreFlightChecks()
+  .then(() => {
+    console.log("📡 Listener active. Waiting for instructions...");
+    pollTasks();
+  })
+  .catch((error) => {
+    const message = error instanceof Error ? error.message : String(error);
+    console.error(`❌ Pre-flight check failed: ${message}`);
+    process.exit(1);
+  });
