@@ -12,7 +12,8 @@ const getRequiredEnv = (name: string): string => {
   return value;
 };
 export const BACKEND_URL = getRequiredEnv("BACKEND_URL");
-export const MACHINE_ID = getRequiredEnv("MACHINE_ID");
+export const USER_ID = getRequiredEnv("USER_ID");
+export const SESSION_ID = getRequiredEnv("SESSION_ID");
 export const PROJECT_PATH = getRequiredEnv("PROJECT_PATH");
 
 /**
@@ -106,6 +107,18 @@ export const runPreFlightChecks = async (): Promise<void> => {
  * @returns A promise that resolves with the task result, including success status, output, error message, and exit code
  */
 export const runClaudeTask = (prompt: string): Promise<ClaudeTaskResult> => {
+
+  // check if project path exists and is a directory
+  const fs = require("fs");
+  if (!fs.existsSync(PROJECT_PATH) || !fs.lstatSync(PROJECT_PATH).isDirectory()) {
+    // create the directory if it doesn't exist
+    fs.mkdirSync(PROJECT_PATH, { recursive: true });
+    console.warn(
+      `⚠️  Project path "${PROJECT_PATH}" did not exist and was created. Please ensure this is the correct path and that it contains your project files.`,
+    );
+  }
+
+
   return new Promise((resolve) => {
     const args = [
       "-p",

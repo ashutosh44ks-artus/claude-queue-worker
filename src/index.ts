@@ -3,7 +3,8 @@ import "dotenv/config";
 import { PendingTaskResponse } from "./types";
 import {
   BACKEND_URL,
-  MACHINE_ID,
+  USER_ID,
+  SESSION_ID,
   runClaudeTask,
   runPreFlightChecks,
 } from "./utils";
@@ -14,7 +15,7 @@ import {
 const pollTasks = async (): Promise<void> => {
   try {
     const { data } = await axios.get<PendingTaskResponse>(
-      `${BACKEND_URL}/tasks/pending?machineId=${MACHINE_ID}`,
+      `${BACKEND_URL}/tasks/pending?userId=${USER_ID}&sessionId=${SESSION_ID}`,
     );
 
     if (!data.task) {
