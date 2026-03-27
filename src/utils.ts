@@ -14,7 +14,7 @@ const getRequiredEnv = (name: string): string => {
 export const BACKEND_URL = getRequiredEnv("BACKEND_URL");
 export const USER_ID = getRequiredEnv("USER_ID");
 export const SESSION_ID = getRequiredEnv("SESSION_ID");
-export const PROJECT_PATH = getRequiredEnv("PROJECT_PATH");
+export const ANTHROPIC_API_KEY = getRequiredEnv("ANTHROPIC_API_KEY");
 
 /**
  * Checks if the Claude CLI is installed and accessible in the system PATH by running 'claude --version'.
@@ -107,22 +107,18 @@ export const runPreFlightChecks = async (): Promise<void> => {
  * @returns A promise that resolves with the task result, including success status, output, error message, and exit code
  */
 export const runClaudeTask = (prompt: string): Promise<ClaudeTaskResult> => {
-
-  // check if project path exists and is a directory
-  const fs = require("fs");
-  if (!fs.existsSync(PROJECT_PATH) || !fs.lstatSync(PROJECT_PATH).isDirectory()) {
-    // create the directory if it doesn't exist
-    fs.mkdirSync(PROJECT_PATH, { recursive: true });
-    console.warn(
-      `⚠️  Project path "${PROJECT_PATH}" did not exist and was created. Please ensure this is the correct path and that it contains your project files.`,
-    );
-  }
-
-
   return new Promise((resolve) => {
-    const args = [
+    const dockerArgs = [
+      "run",
+      "--rm",
+      `-e ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}`,
+      "-v $(pwd)/workspace:/workspace",
+      "-w /workspace",
+      "claude-queue",
+      "claude",
       "-p",
-      prompt,
+      `"${prompt}"`,
+      "--allow-dangerously-skip-permissions",
       "--dangerously-skip-permissions",
       "--output-format",
       "json",
@@ -130,10 +126,12 @@ export const runClaudeTask = (prompt: string): Promise<ClaudeTaskResult> => {
 
     console.log(`🚀 Starting Task: ${prompt}`);
 
+    console.log(`🐳 Running Docker command: docker ${dockerArgs.join(" ")}`);
+
     execFile(
-      "claude",
-      args,
-      { cwd: PROJECT_PATH, maxBuffer: 10 * 1024 * 1024, encoding: "utf8" },
+      "docker",
+      dockerArgs,
+      { cwd: process.cwd(), maxBuffer: 10 * 1024 * 1024, encoding: "utf8", shell: true },
       (error: ExecFileException | null, stdout: string, stderr: string) => {
         const trimmedStdout = stdout.trim();
         let parsedOutput: unknown = trimmedStdout;
