@@ -1,5 +1,7 @@
 import { execFile } from "child_process";
 import type { ExecFileException } from "child_process";
+import { existsSync } from "fs";
+import path from "path";
 import { ClaudeTaskResult } from "./types";
 
 const getRequiredEnv = (name: string): string => {
@@ -101,6 +103,19 @@ export const runPreFlightChecks = async (): Promise<void> => {
   await checkClaudeLogin();
   console.log("✅ All pre-flight checks passed. Starting task listener...");
 };
+
+const resolveWorkspaceDir = (): string => {
+  const workspaceDir = path.resolve(__dirname, "../../workspace");
+
+  if (!existsSync(workspaceDir)) {
+    throw new Error(
+      `Workspace directory not found at ${workspaceDir}. Expected sibling folders: worker/ and workspace/.`,
+    );
+  }
+
+  return workspaceDir;
+};
+
 /**
  * Executes a headless Claude command in the project directory
  * @param prompt The task description to send to Claude
@@ -108,16 +123,20 @@ export const runPreFlightChecks = async (): Promise<void> => {
  */
 export const runClaudeTask = (prompt: string): Promise<ClaudeTaskResult> => {
   return new Promise((resolve) => {
+    const workspaceDir = resolveWorkspaceDir();
     const dockerArgs = [
       "run",
       "--rm",
-      `-e ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}`,
-      "-v $(pwd)/workspace:/workspace",
-      "-w /workspace",
+      "-e",
+      `ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}`,
+      "-v",
+      `${workspaceDir}:/workspace`,
+      "-w",
+      "/workspace",
       "claude-queue",
       "claude",
       "-p",
-      `"${prompt}"`,
+      prompt,
       "--allow-dangerously-skip-permissions",
       "--dangerously-skip-permissions",
       "--output-format",
@@ -131,7 +150,7 @@ export const runClaudeTask = (prompt: string): Promise<ClaudeTaskResult> => {
     execFile(
       "docker",
       dockerArgs,
-      { cwd: process.cwd(), maxBuffer: 10 * 1024 * 1024, encoding: "utf8", shell: true },
+      { cwd: process.cwd(), maxBuffer: 10 * 1024 * 1024, encoding: "utf8" },
       (error: ExecFileException | null, stdout: string, stderr: string) => {
         const trimmedStdout = stdout.trim();
         let parsedOutput: unknown = trimmedStdout;
