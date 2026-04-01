@@ -8,9 +8,13 @@
    - `BACKEND_URL`: Your backend server URL
    - `USER_ID`: Your user identifier
    - `SESSION_ID`: Your session identifier
-5. Build the Docker image:
+5. Go to the `worker` directory:
+   ```bash
+   cd worker
+   ```
+6. Build the Docker image:
    ```bash
    docker build -t claude-queue .
    ```
-6. Install dependencies: `npm install`
-7. Start the worker: `npm run dev`
+7. Install dependencies: `npm install`
+8. Start the worker: `npm run dev`
