@@ -60,3 +60,5 @@ We have created a new table in our database called `claude_task_queue` which has
 
 ### Usage in Artus Frontend:
 TBD but eventually frontend will be the trigger for adding tasks to the queue and will also show the status of the tasks in the queue for users/projects.
+
+The end user will be provided a guide on how to set up and run the worker process on their local machine or in a cloud environment, and they will be responsible for providing their own Claude API key and running the worker process to generate their app.
